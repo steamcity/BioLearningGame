@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Game</title>
+    <link rel="stylesheet" href="../style/style.css"> <!-- Inclusion de votre fichier CSS -->
+    <script src="PlayerScript.js" defer></script> <!-- Inclusion de votre fichier JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="menu">
+        <a href="../index.html" class="square"><span>Acceuil</span></a>
+        <a href="" class="square"><span>Game Part</span></a>
+        <a href="../SelfLearningGame/SelfBiolearning.html" class="square"><span>AI Part</span></a>
+        <a href="../DesignSelfLearningGame/DesignBiolearning.html" class="square"><span>Design Part</span></a>
+    </div>
+
+    <h1>Game Part</h1>
+    <div class="row">
+
+        <div class="col">
+            <canvas id="main" width="600px" height="600px"></canvas>
+        </div>
+
+        <div class="col">
+            <button type="button" id="reveal">Reveal</button>
+            <p><strong>Generation: </strong><span id="generation"></span></p>
+            <p><strong>Step: </strong><span id="step"></span></p>
+            <p><strong>Epsilon: </strong><span id="epsilon"></span></p>
+        </div>
+
+        <div class="col">
+            <div class="row">
+                <!-- <div class="col">
+                    <h4>Q Table</h4>
+                    <h5>[UP, DOWN, LEFT, RIGHT]</h5>
+                    <div id="q-table">
+                    </div>
+                </div> -->
+                <div class="col">
+                    <table class="table table-condensed" id="history" >
+                        <thead>
+                            <th>Generation</th>
+                            <th>Win/Lose</th>
+                            <th>Steps</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
