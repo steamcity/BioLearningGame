@@ -47,7 +47,7 @@ project-root/
 
 ## Installation Instructions
 1. **Clone the repository**:
- Go to that link "https://charly-sketch.github.io/DiscoverAI/"
+ Go to that link "[BioLearningGame](https://steamcity.github.io/BioLearningGame/)"
 1. **Clone the repository**:
     ```bash
     git clone https://github.com/username/project-name.git
