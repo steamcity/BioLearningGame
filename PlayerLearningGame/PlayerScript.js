@@ -1,8 +1,78 @@
-var villainsColor = "#2F2F2F";
-var damselColor = "#2F2F2F";
 var IsReveal = false;
 var game;
-var heroAngle = 0;
+var heroDirection = "left";
+
+var historyChart;
+var chartData = {
+    labels: [],
+    datasets: [{
+        label: 'Steps per Generation',
+        data: [],
+        backgroundColor: [],
+        borderColor: [],
+        borderWidth: 1
+    }]
+};
+
+function initChart() {
+    var ctx = document.getElementById('history-chart').getContext('2d');
+    historyChart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+            scales: {
+                x: {
+                    beginAtZero: true
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateChart(generation, steps, status) {
+    chartData.labels.push(generation);
+    chartData.datasets[0].data.push(steps);
+    if (status === 'Won') {
+        chartData.datasets[0].backgroundColor.push('green');
+        chartData.datasets[0].borderColor.push('green');
+    } else {
+        chartData.datasets[0].backgroundColor.push('red');
+        chartData.datasets[0].borderColor.push('red');
+    }
+    historyChart.update();
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function hashStringToSeed(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+      var char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+  }
+  return hash;
+}
+
+function createRandomGenerator(seed) {
+  var m = 0x80000000;
+  var a = 1103515245;
+  var c = 12345;
+  var state = seed ? seed : Math.floor(Math.random() * (m - 1));
+  return function() {
+      state = (a * state + c) % m;
+      return state / (m - 1);
+  };
+}
 
   function reveal(){
     game.draw();
@@ -13,7 +83,7 @@ var heroAngle = 0;
   document.addEventListener("keydown", function(event) {
     const key = event.key.toLowerCase();
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-      const dir = key.substr(5, 1); // Récupère la direction à partir de la touche
+      const dir = key.substr(5, 1);
       play(dir);
     }
   });
@@ -83,11 +153,91 @@ var heroAngle = 0;
 }
 
   class Game {
-    constructor() {
-      this.canvas = document.getElementById("main");
-      this.ctx = this.canvas.getContext("2d");
-      this.reset();
-    }
+      constructor() {
+        this.canvas = document.getElementById("main");
+        this.ctx = this.canvas.getContext("2d");
+  
+        this.hero_u = new Image();
+        this.hero_u.src = '../img/ambulance/ambulance_u.png';
+        this.hero_d = new Image();
+        this.hero_d.src = '../img/ambulance/ambulance_d.png';
+        this.hero_r = new Image();
+        this.hero_r.src = '../img/ambulance/ambulance_r.png';
+        this.hero_l = new Image();
+        this.hero_l.src = '../img/ambulance/ambulance_l.png';
+  
+        this.heroImage = new Image();
+        this.heroImage.src = '../img/hero.png';
+
+        this.exploImage = new Image();
+        this.exploImage.src = '../img/explosion.gif';
+  
+        this.damselImageArray = this.getRandomImage("damsel");
+        this.villainImageArray = this.getRandomImage("vilain");
+        this.roadImageArray = this.getRandomImage("empty");
+
+        this.damselImage = new Image();
+        this.damselImage.onload = () => {
+          this.heroImage = new Image();
+          this.heroImage.onload = () => {
+            this.villainImage = new Image();
+            this.villainImage.onload = () => {
+              this.roadImage = new Image();
+              this.roadImage.onload = () => {
+                this.reset();
+              };
+              this.roadImage.src = '../img/road/1.png';
+              this.roadImage.src = '../img/road/2.png';
+            };
+            this.villainImage.src = '../img/building/1.png';
+          };
+          this.heroImage.src = '../img/hero.png';
+        };
+        this.damselImage.src = '../img/hospital/1.png';
+  
+        this.hero = [0,0];
+        this.damsel = [4,4];
+        this.villains = [[2,1], [4,2], [1,2], [3,4], [1,5], [5,0]];
+        this.map = this.createMap(this.hero,this.damsel,this.villains);
+        this.reset();
+      }
+      
+      getRandomImage(type){
+        var images = [];
+        var dossier;
+        var number;
+        switch (type){
+          case "damsel" : dossier = "../img/hospital/"; number = 2; break;
+          case "vilain" : dossier = "../img/building/"; number = 66; break;
+          case "empty" : dossier = "../img/road/"; number = 4; break;
+        }
+  
+        while (number>=1){
+          var image = new Image();
+          image.src = dossier + number + ".png";
+          images.push(image);
+          number --;
+        }
+  
+        return shuffle(images);
+      }
+  
+      createMap(hero, damsel, villains) {
+        var map = [];
+        for (var i = 0; i < 6; i++) {
+            map.push(Array(6).fill('-'));
+        }
+    
+        map[hero[0]][hero[1]] = 'H';
+    
+        map[damsel[0]][damsel[1]] = 'D';
+    
+        for (var i = 0; i < villains.length; i++) {
+            map[villains[i][0]][villains[i][1]] = 'V';
+        }
+    
+        return map;
+      }
 
     reset() {
       this.hero = [0,0];
@@ -136,52 +286,75 @@ var heroAngle = 0;
       if (!IsReveal){
         var ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // Draw Damsel
-        ctx.fillStyle = "#2F2F2F" ;
-        ctx.fillRect(this.damsel[0] * 100, this.damsel[1] * 100, 100, 100);
-        // Draw Hero
-        ctx.fillStyle = "#FFFFFF"; // //blanc
-        this.hero_rect = ctx.fillRect(this.hero[0] * 100, this.hero[1] * 100, 100, 100);
-        // Draw Villains
-        ctx.fillStyle = "#2F2F2F";
-        this.villains.forEach(function (item, index) {
-          ctx.fillRect(item[0] * 100, item[1] * 100, 100, 100);
-        });
+    
+        var isoOffsetX = 250;
+        var isoOffsetY = 30;
+    
+        for (var i = 0; i < this.map.length; i++) {
+            for (var j = 0; j < this.map[i].length; j++) {
+                var x = (j - i) * 50 + isoOffsetX;
+                var y = (j + i) * 37 + isoOffsetY;
+                var element = this.map[i][j];
+    
+                var seed = hashStringToSeed(i + ',' + j);
+                var random = createRandomGenerator(seed);
+    
+                var roadImageIndex = Math.floor(random() * this.roadImageArray.length);
+    
+                ctx.drawImage(this.roadImageArray[roadImageIndex], x, y, 100, 75);
+
+                if (element=='H'){ctx.drawImage(this.heroImage, x + 30, y + 15, 40, 40);}
+            }
+        }
       }
       else {
-          var ctx = this.ctx;
-          ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          
-          // Draw Damsel
-          var self = this;
-          var damselImage = new Image();
-          damselImage.src = '../img/hospital.png';
-            
-          damselImage.onload = function() {
-              ctx.drawImage(damselImage, self.damsel[0] * 100, self.damsel[1] * 100, 100, 100);
-            };
+        var ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
-          // Draw Hero
-          var heroImage = new Image();
-          heroImage.src = '../img/car.png';
-          var self = this;
-          heroImage.onload = function() {
-            ctx.save(); 
-            ctx.translate(self.hero[0] * 100 + 50, self.hero[1] * 100 + 50); 
-            ctx.rotate(heroAngle * Math.PI / 180);
-            ctx.drawImage(heroImage, -50, -50, 100, 100); 
-            ctx.restore(); 
-          };
-          
-          // Draw Villains
-          this.villains.forEach(function (villain) {
-            var villainsImage = new Image();
-            villainsImage.src = '../img/building.png';
-            
-            villainsImage.onload = function() {
-              ctx.drawImage(villainsImage, villain[0] * 100, villain[1] * 100, 100, 100);
-            };
-          });
+        var isoOffsetX = 250;
+        var isoOffsetY = 30;
+    
+        for (var i = 0; i < this.map.length; i++) {
+            for (var j = 0; j < this.map[i].length; j++) {
+                var x = (j - i) * 50 + isoOffsetX;
+                var y = (j + i) * 37 + isoOffsetY;
+                var element = this.map[i][j];
+    
+                var seed = hashStringToSeed(i + ',' + j);
+                var random = createRandomGenerator(seed);
+    
+                var roadImageIndex = Math.floor(random() * this.roadImageArray.length);
+                var damselImageIndex = Math.floor(random() * this.damselImageArray.length);
+                var villainImageIndex = Math.floor(random() * this.villainImageArray.length);
+    
+                ctx.drawImage(this.roadImageArray[roadImageIndex], x, y, 100, 75);
+    
+                switch (element) {
+                    case 'H':
+                        switch (heroDirection) {
+                            case "up":
+                                ctx.drawImage(this.hero_u, x + 30, y + 15, 40, 40);
+                                break;
+                            case "down":
+                                ctx.drawImage(this.hero_d, x + 30, y + 15, 40, 40);
+                                break;
+                            case "left":
+                                ctx.drawImage(this.hero_l, x + 30, y + 15, 40, 40);
+                                break;
+                            case "right":
+                                ctx.drawImage(this.hero_r, x + 30, y + 15, 40, 40);
+                                break;
+                        }
+                        break;
+                    case 'D':
+                        ctx.drawImage(this.damselImageArray[damselImageIndex], x + 20, y - 30, 75, 90);
+                        break;
+                    case 'V':
+                      ctx.drawImage(this.villainImageArray[villainImageIndex], x + 20, y - 15, 75, 75);
+                        break;
+                }
+            }
+        }
       }
     }
   }
@@ -226,7 +399,6 @@ var heroAngle = 0;
 
     giveReward(reward, state, prevState, action) {
       console.log([reward, state, prevState, action])
-      //New Q value = Current Q value + lr * [Reward + discount_rate * (highest Q value between possible actions from the new state s’ ) — Current Q value ]
       var maxArr = this.qArr[state];
       var maxQ = Math.max.apply(Math, maxArr);
       var newQ = this.qArr[prevState][action] + this.lr * (reward + this.discount_rate * maxQ) - this.qArr[prevState][action]
@@ -234,54 +406,52 @@ var heroAngle = 0;
     }
   }
 
-  // Play the game
   game = new Game
   net = new QNetwork(4, 36)
 
-  var i = 1;                     //  set your counter to 1
+  var i = 1;
   var generation = 1;
   var step = 1;
   var history = [];
 
   $(document).ready(function() {
-    // Ajoute un écouteur d'événements pour les touches de direction
     $(document).keydown(function(e) {
         var key = e.which;
+        if (key==37||key==38||key==39||key==40){
         var move;
-        // Détermine la direction en fonction de la touche enfoncée
         switch(key) {
-            case 37: // Touche gauche
-                move = 'l';
-                heroAngle = 90;
-                break;
-            case 38: // Touche haut
-                move = 'u';
-                heroAngle = 180;
-                break;
-            case 39: // Touche droite
+            case 37:
                 move = 'r';
-                heroAngle = -90;
+                heroDirection = "right";
                 break;
-            case 40: // Touche bas
+            case 38:
+                move = 'u';
+                heroDirection = "up";
+                break;
+            case 39: 
+                move = 'l';
+                heroDirection = "left";
+                break;
+            case 40: 
                 move = 'd';
-                heroAngle = 0;
+                heroDirection = "down";
                 break;
-            default:
-                return; // Ne fait rien pour les autres touches
         }
-        // Joue le mouvement et met à jour l'état du jeu
         var reward = game.play(move);
-        // Actualise l'affichage du jeu
+        game.map = game.createMap(game.hero,game.damsel,game.villains);
+
         game.draw();
-        // Met à jour les informations sur l'état du jeu
+
         if (reward == -100) {
             history[generation] = {status: 'Lost', steps: step};
             $('#history').prepend('<tr><td>' + generation + '</td><td>Lost</td><td>'+step+'</td></tr>');
+            updateChart(generation, step, 'Lost');
             generation++;
             step = 1;
         } else if (reward == 100) {
             history[generation] = {status: 'Won', steps: step};
             $('#history').prepend('<tr class="success"><td>' + generation + '</td><td>Won</td><td>'+step+'</td></tr>');
+            updateChart(generation, step, 'Won');
             generation++;
             step = 1;
         } else {
@@ -290,13 +460,11 @@ var heroAngle = 0;
         $('#generation').text(generation);
         $('#step').text(step);
         $('#epsilon').text(net.epsilon);
-        // Empêche le défilement de la page lorsque les touches de direction sont enfoncées
         e.preventDefault();
+      }
     });
 
-    // Initialise le jeu
     game = new Game();
-    // Affiche le jeu
     game.draw();
 });
 
@@ -307,4 +475,5 @@ var heroAngle = 0;
       IsReveal = !IsReveal;
       reveal();
     })
+    initChart();
   })

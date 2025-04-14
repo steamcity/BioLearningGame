@@ -1,6 +1,77 @@
 var isPaused = true;
-var heroAngle = 0;
+var heroDirection = "left";
 
+var historyChart;
+var chartData = {
+    labels: [],
+    datasets: [{
+        label: 'Steps per Generation',
+        data: [],
+        backgroundColor: [],
+        borderColor: [],
+        borderWidth: 1
+    }]
+};
+
+function initChart() {
+    var ctx = document.getElementById('history-chart').getContext('2d');
+    historyChart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+            scales: {
+                x: {
+                    beginAtZero: true
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateChart(generation, steps, status) {
+    chartData.labels.push(generation);
+    chartData.datasets[0].data.push(steps);
+    if (status === 'Won') {
+        chartData.datasets[0].backgroundColor.push('green');
+        chartData.datasets[0].borderColor.push('green');
+    } else {
+        chartData.datasets[0].backgroundColor.push('red');
+        chartData.datasets[0].borderColor.push('red');
+    }
+    historyChart.update();
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function hashStringToSeed(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+      var char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
+  }
+  return hash;
+}
+
+function createRandomGenerator(seed) {
+  var m = 0x80000000;
+  var a = 1103515245;
+  var c = 12345;
+  var state = seed ? seed : Math.floor(Math.random() * (m - 1));
+  return function() {
+      state = (a * state + c) % m;
+      return state / (m - 1);
+  };
+}
   function togglePause() {
     isPaused = !isPaused;
     var buttonText = isPaused ? "Resume" : "Pause";
@@ -73,24 +144,26 @@ var heroAngle = 0;
 
 
 
-
-
 class Game {
     constructor(hero, damsels, villains) {
       this.canvas = document.getElementById("main");
       this.ctx = this.canvas.getContext("2d");
       this.initialHero = hero || [0, 0];
-      this.initialDamsels = damsels || [[0, 5], [4, 4]];
-      this.initialVillains = villains || [[2, 1], [4, 2], [1, 2], [3, 4], [1, 5], [5, 0]];
+      this.initialDamsels = damsels || [[5, 5]];
+      this.initialVillains = villains || [[5  , 0],[4,1],[2,3],[1,4],[0,5]];
 
-      this.damselImage = new Image();
-      this.damselImage.src = '../img/hospital.png';
+      this.hero_u = new Image();
+      this.hero_u.src = '../img/ambulance/ambulance_u.png';
+      this.hero_d = new Image();
+      this.hero_d.src = '../img/ambulance/ambulance_d.png';
+      this.hero_r = new Image();
+      this.hero_r.src = '../img/ambulance/ambulance_r.png';
+      this.hero_l = new Image();
+      this.hero_l.src = '../img/ambulance/ambulance_l.png'
 
-      this.heroImage = new Image();
-      this.heroImage.src = '../img/car.png';
-
-      this.villainImage = new Image();
-      this.villainImage.src = '../img/building.png';
+      this.damselImageArray = this.getRandomImage("damsel");
+      this.villainImageArray = this.getRandomImage("vilain");
+      this.roadImageArray = this.getRandomImage("empty");
 
       this.damselImage = new Image();
       this.damselImage.onload = () => {
@@ -98,17 +171,61 @@ class Game {
         this.heroImage.onload = () => {
           this.villainImage = new Image();
           this.villainImage.onload = () => {
-            this.reset(); // Une fois que toutes les images sont chargées, initialisez le jeu
+            this.roadImage = new Image();
+            this.roadImage.onload = () => {
+              this.reset();
+            };
+            this.roadImage.src = '../img/road/1.png';
           };
-          this.villainImage.src = '../img/building.png';
+          this.villainImage.src = '../img/building/1.png';
         };
-        this.heroImage.src = '../img/car.png';
+        this.heroImage.src = '../img/hero.png';
       };
-      this.damselImage.src = '../img/hospital.png';
+      this.damselImage.src = '../img/hospital/1.png';
 
+      this.map = this.createMap(this.initialHero,this.initialDamsels,this.initialVillains);
       this.reset();
     }
   
+    getRandomImage(type){
+      var images = [];
+      var dossier;
+      var number;
+      switch (type){
+        case "damsel" : dossier = "../img/hospital/"; number = 2; break;
+        case "vilain" : dossier = "../img/building/"; number = 66; break;
+        case "empty" : dossier = "../img/road/"; number = 4; break;
+      }
+
+      while (number>=1){
+        var image = new Image();
+        image.src = dossier + number + ".png";
+        images.push(image);
+        number --;
+      }
+
+      return shuffle(images);
+    }
+
+    createMap(hero, damsel, villains) {
+      var map = [];
+      for (var i = 0; i < 6; i++) {
+          map.push(Array(6).fill('-'));
+      }
+  
+      map[hero[0]][hero[1]] = 'H';
+  
+      for (var i = 0; i < damsel.length; i++) {
+        map[damsel[i][0]][damsel[i][1]] = 'D';
+    }
+
+      for (var i = 0; i < villains.length; i++) {
+          map[villains[i][0]][villains[i][1]] = 'V';
+      }
+  
+      return map;
+    }
+
     reset() {
       this.hero = [...this.initialHero];
       this.damsels = this.initialDamsels.map(damsel => [...damsel]);
@@ -136,6 +253,7 @@ class Game {
       } else {
         reward = -1;
       }
+      this.map = this.createMap(this.hero,this.damsels,this.villains);
       return reward;
     }
   
@@ -143,19 +261,19 @@ class Game {
       switch (dir) {
         case 'u':
           this.hero[1] = this.hero[1] - 1;
-          heroAngle = 180; 
+          heroDirection = "up";
           break;
         case 'd':
           this.hero[1] = this.hero[1] + 1;
-          heroAngle = 0; 
+          heroDirection = "down";
           break;
         case 'l':
           this.hero[0] = this.hero[0] - 1;
-          heroAngle = 90; 
+          heroDirection = "left";
           break;
         case 'r':
           this.hero[0] = this.hero[0] + 1;
-          heroAngle = -90; 
+          heroDirection = "right";
           break;
       }
       this.moveCount = this.moveCount + 1;
@@ -163,37 +281,57 @@ class Game {
   
     draw() {
       var ctx = this.ctx;
-      var self = this;
-
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      // Draw Damsels
-      this.damsels.forEach(function(damsel) {
-          ctx.drawImage(self.damselImage, damsel[0] * 100, damsel[1] * 100, 100, 100);
-      });
-
-      // Draw Hero
-      ctx.save();
-      ctx.translate(self.hero[0] * 100 + 50, self.hero[1] * 100 + 50);
-      ctx.rotate(heroAngle * Math.PI / 180);
-      ctx.drawImage(self.heroImage, -50, -50, 100, 100);
-      ctx.restore();
-
-      // Draw Villains
-      this.villains.forEach(function(villain) {
-          ctx.drawImage(self.villainImage, villain[0] * 100, villain[1] * 100, 100, 100);
-      });
+  
+      var isoOffsetX = 250;
+      var isoOffsetY = 30;
+  
+      for (var i = 0; i < this.map.length; i++) {
+          for (var j = 0; j < this.map[i].length; j++) {
+              var x = (j - i) * 50 + isoOffsetX;
+              var y = (j + i) * 37 + isoOffsetY;
+              var element = this.map[i][j];
+  
+              var seed = hashStringToSeed(i + ',' + j);
+              var random = createRandomGenerator(seed);
+  
+              var roadImageIndex = Math.floor(random() * this.roadImageArray.length);
+              var damselImageIndex = Math.floor(random() * this.damselImageArray.length);
+              var villainImageIndex = Math.floor(random() * this.villainImageArray.length);
+  
+              ctx.drawImage(this.roadImageArray[roadImageIndex], x, y, 100, 75);
+  
+              switch (element) {
+                  case 'H':
+                      switch (heroDirection) {
+                          case "up":
+                              ctx.drawImage(this.hero_u, x + 30, y + 15, 40, 40);
+                              break;
+                          case "down":
+                              ctx.drawImage(this.hero_d, x + 30, y + 15, 40, 40);
+                              break;
+                          case "left":
+                              ctx.drawImage(this.hero_l, x + 30, y + 15, 40, 40);
+                              break;
+                          case "right":
+                              ctx.drawImage(this.hero_r, x + 30, y + 15, 40, 40);
+                              break;
+                      }
+                      break;
+                  case 'D':
+                      ctx.drawImage(this.damselImageArray[damselImageIndex], x + 20, y - 30, 75, 90);
+                      break;
+                  case 'V':
+                    ctx.drawImage(this.villainImageArray[villainImageIndex], x + 20, y - 15, 75, 75);
+                    break;
+              }
+          }
+      }
   }
 }
 
 
   
-
-
-
-
-
-
   class QNetwork {
     constructor(actions, states) {
       this.initArr(actions, states);
@@ -233,8 +371,6 @@ class Game {
     }
 
     giveReward(reward, state, prevState, action) {
-      console.log([reward, state, prevState, action])
-      //New Q value = Current Q value + lr * [Reward + discount_rate * (highest Q value between possible actions from the new state s’ ) — Current Q value ]
       var maxArr = this.qArr[state];
       var maxQ = Math.max.apply(Math, maxArr);
       var newQ = this.qArr[prevState][action] + this.lr * (reward + this.discount_rate * maxQ) - this.qArr[prevState][action]
@@ -244,117 +380,156 @@ class Game {
 
 
 
-
-
-  // Play the game
   game = new Game
   net = new QNetwork(4, 36)
 
-  var i = 1;                     //  set your counter to 1
+  var i = 1;
   var generation = 1;
   var step = 1;
   var history = [];
 
-  function myLoop () {   
-    if (!isPaused) {      
-      var speed = parseInt(document.getElementById('speed').value); // Récupère la valeur de l'élément input
-     setTimeout(function () {    //  call a 3s setTimeout when the loop is called
-        state = game.hero[0] * 5 + game.hero[1] + game.hero[0]
-        action = net.think(state)
-        // Convert action 
-        var move = null;
-        switch(action) {
-          case 0:
-            move = 'u'
-            break;
-          case 1:
-            move = 'd'
-            break;
-          case 2:
-            move = 'l'
-            break;
-          case 3:
-            move = 'r'
-            break;
-        }
-        reward = game.play(move)
-        prevState = state
-        state = game.hero[0] * 5 + game.hero[1] + game.hero[0]
-        net.giveReward(reward, state, prevState, action)
-        if (reward == -100) {
-          history[generation] = {status: 'Lost', steps: step}
-          $('#history').prepend('<tr><td>' + generation + '</td><td>Lost</td><td>'+step+'</td></tr>');
-          generation = generation + 1;
-          step = 1;
-        } else if (reward == 100) {
-          history[generation] = {status: 'Won', steps: step}
-          $('#history').prepend('<tr class="success"><td>' + generation + '</td><td>Won</td><td>'+step+'</td></tr>');
-          generation = generation + 1;
-          step = 1;
-        } else {
-          step = step + 1;
-        }
-        $('#generation').text(generation);
-        $('#step').text(step);
-        var qOut = '';
-        $.each(net.qArr, function() {
-          qOut = qOut + JSON.stringify(this) + '<br>';
-        });
-        $('#q-table').html(qOut);
-        $('#epsilon').text(net.epsilon);
-        i++;                     //  increment the counter
-        if (i < 10000) {            //  if the counter < 10, call the loop function
-           myLoop();             //  ..  again which will trigger another 
-        }                        //  ..  setTimeout()
-     }, 150-speed)
+  function myLoop() {   
+    if (!isPaused) {     
+        var speed = parseInt(document.getElementById('speed').value); 
+        setTimeout(function () {
+            state = game.hero[0] * 5 + game.hero[1] + game.hero[0]
+            action = net.think(state)
+            var move = null;
+            switch(action) {
+                case 0:
+                    move = 'u'
+                    break;
+                case 1:
+                    move = 'd'
+                    break;
+                case 2:
+                    move = 'l'
+                    break;
+                case 3:
+                    move = 'r'
+                    break;
+            }
+            reward = game.play(move)
+            prevState = state
+            state = game.hero[0] * 5 + game.hero[1] + game.hero[0]
+            net.giveReward(reward, state, prevState, action)
+
+            if (reward == -100) {
+                history[generation] = {status: 'Lost', steps: step}
+                $('#history').prepend('<tr><td>' + generation + '</td><td>Lost</td><td>'+step+'</td></tr>');
+                updateChart(generation, step, 'Lost'); // Appel de updateChart
+                generation = generation + 1;
+                step = 1;
+            } else if (reward == 100) {
+                history[generation] = {status: 'Won', steps: step}
+                $('#history').prepend('<tr class="success"><td>' + generation + '</td><td>Won</td><td>'+step+'</td></tr>');
+                updateChart(generation, step, 'Won'); // Appel de updateChart
+                generation = generation + 1;
+                step = 1;
+            } else {
+                step = step + 1;
+            }
+
+            $('#generation').text(generation);
+            $('#step').text(step);
+            var qOut = '';
+            $.each(net.qArr, function() {
+                qOut = qOut + JSON.stringify(this) + '<br>';
+            });
+            $('#q-table').html(qOut);
+            $('#epsilon').text(net.epsilon);
+            i++;
+            if (i < 10000) {
+                myLoop();
+            }
+        }, 150-speed)
     }
-  }
+}
 
 
 
   $(document).ready(function() {
     var editButton = $('#edit');
-    editButton.prop('disabled', true); 
+    initChart();
+    editButton.prop('disabled', true);
 
-    $('#main').click(function(e) {
-        if (!isPaused) return;
+    var startButton = $('#start');
+    startButton.prop('disabled', false); 
+    
+      for (var i = 0; i < game.map.length; i++) {
+          for (var j = 0; j < game.map[i].length; j++) {
+              var cellId = '#cell_' + i + '_' + j;
+              var element = game.map[i][j];
+              switch (element) {
+                  case 'H':
+                      $(cellId).css('background-color', 'lightblue');
+                      break;
+                  case 'D':
+                      $(cellId).css('background-color', 'green');
+                      break;
+                  case 'V':
+                      $(cellId).css('background-color', 'red');
+                      break;
+                  default:
+                      $(cellId).css('background-color', '#ddddd6');
+                      break;
+              }
+          }
+      }
 
-        var canvas = document.getElementById('main');
-        var rect = canvas.getBoundingClientRect();
-        var x = e.clientX - rect.left;
-        var y = e.clientY - rect.top;
-
-        var col = Math.floor(x / 100);
-        var row = Math.floor(y / 100);
-
-        var selectedType = $('input[name="case"]:checked').val();
-        switch (selectedType) {
-            case 'damsel':
-                game.damsels.push([col, row]);
-                break;
-            case 'villain':
-                game.villains.push([col, row]);
-                break;
-            case 'hero':
+    $('.cell').click(function() {
+      var cellId = $(this).attr('id');
+      var coordinates = cellId.split('_').slice(1).map(Number);
+      var col = coordinates[0];
+      var row = coordinates[1];
+  
+      var selectedType = $('input[name="case"]:checked').val();
+  
+      switch (selectedType) {
+          case 'damsel':
+              game.damsels.push([col, row]);
+              $(this).css('background-color', 'green');
+              break;
+          case 'villain':
+              game.villains.push([col, row]);
+              $(this).css('background-color', 'red');
+              break;
+              case 'hero':
+                for (var i = 0; i < game.map.length; i++) {
+                  for (var j = 0; j < game.map[i].length; j++) {
+                    if (game.map[i][j] === 'H') {
+                      game.map[i][j] = '-';
+                      $('#cell_' + i + '_' + j).css('background-color', '#ddddd6');
+                    }
+                  }
+                }
                 game.hero = [col, row];
+                $(this).css('background-color', 'lightblue');
                 break;
-            case 'empty':
+          case 'empty':
               game.damsels = game.damsels.filter(function(coord) {
-                return !(coord[0] === col && coord[1] === row);
+                  return !(coord[0] === col && coord[1] === row);
               });
               game.villains = game.villains.filter(function(coord) {
                   return !(coord[0] === col && coord[1] === row);
               });
+              $(this).css('background-color', '#ddddd6');
               break;
-        }
-        
-        editButton.prop('disabled', false);
-        game.draw();
-    });
+      }
+      console.log("Coordonnées de la case : ", col, row);
+      console.log("Type sélectionné : ", selectedType);
+  
+      editButton.prop('disabled', false);
+      startButton.prop('disabled', true);
+      game.map = game.createMap(game.hero, game.damsels, game.villains);
+      game.draw();
+  });
+  
 
     $('#edit').click(function() {
         game = new Game(game.hero, game.damsels, game.villains);
         editButton.prop('disabled', true);
+        startButton.prop('disabled', false); 
     });
 
     $('#start').click(function() {

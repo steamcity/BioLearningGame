@@ -4,71 +4,137 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Game</title>
-    <link rel="stylesheet" href="../style/style.css"> <!-- Inclusion de votre fichier CSS -->
-    <script src="DesignScript.js" defer></script> <!-- Inclusion de votre fichier JavaScript -->
+    <link rel="stylesheet" href="../style/style.css"> 
+    <link rel="stylesheet" href="../style/language.css">
+    
+    <script src="DesignScript.js" defer></script> 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="menu">
-        <a href="../index.html" class="square"><span>Acceuil</span></a>
-        <a href="../PlayerLearningGame/PlayerBiolearning.html" class="square"><span>Game Part</span></a>
-        <a href="../SelfLearningGame/SelfBiolearning.html" class="square"><span>AI Part</span></a>
-        <a href="" class="square"><span>Design Part</span></a>
-        <div class="dropdown">
-            <span>Language</span>
-            <div class="dropdown-content">
-              <p>English</p>
-              <p>French</p>
-              <p>Spanish</p>
-              <p>...</p>
-            </div>
-        </div>
+        <a href="../index.html" class="square" id="home"><span>Home</span></a>
+        <a href="../PlayerLearningGame/PlayerBiolearning.html" class="square" id="game_part"><span>Game Part</span></a>
+        <a href="../SelfLearningGame/SelfBiolearning.html" class="square" id="ai_part"><span>AI Part</span></a>
+        <a href="" class="square" id="design_part"><span>Design Part</span></a>
     </div>
 
 
-    <h1>Design Part</h1>
+    <h1 id="heading_design_part">Design Part</h1>
     <div class="row">
 
         <div class="col">
-            <input type="range" id="speed" name="speed" min="0" max="150" /> <label for="speed">Speed</label>
-
             <canvas id="main" width="600px" height="600px"></canvas>
-            <button type="button" id="edit">Edit</button>
-
-            <div class="row">
-                <input type="radio" name="case" value="damsel"/><label for="damsel"> Hospital</label>
-                <input type="radio" name="case" value="villain"/><label for="vilains"> Building</label>
-                <input type="radio"  name="case" value="hero"/><label for="hero"> Ambulance</label>  
-                <input type="radio"  name="case" value="empty"/><label for="empty"> empty</label>  
-            </div>
+            <input type="range" id="speed" name="speed" min="0" max="150" /> <label for="speed"><span id="speed_label">Speed</span></label>
         </div>
 
         <div class="col">
-            <button type="button" id="start">Start</button>
-            <p><strong>Generation: </strong><span id="generation"></span></p>
-            <p><strong>Step: </strong><span id="step"></span></p>
-            <p><strong>Epsilon: </strong><span id="epsilon"></span></p>
+            <button type="button" id="start"><span id="start_button">Start</span></button>
+            <p><strong><span id="generation_label">Generation:</span></strong><span id="generation"></span></p>
+            <p><strong><span id="step_label">Step:</span></strong><span id="step"></span></p>
+            <p><strong><span id="epsilon_label">Epsilon:</span></strong><span id="epsilon"></span></p>
+
+            <button type="button" id="edit"><span id="edit_button">Edit</span></button>
+
+            <div class="row">
+                <input type="radio" name="case" id="damsel" value="damsel"/><label for="damsel" class="radio-btn"><span id="case_label_damsel">Hospital</span></label>
+                <input type="radio" name="case" id="villain" value="villain"/><label for="villain" class="radio-btn"><span id="case_label_villain">Building</span></label>
+                <input type="radio" name="case" id="hero" value="hero"/><label for="hero" class="radio-btn"><span id="case_label_hero">Ambulance</span></label>
+                <input type="radio" name="case" id="empty" value="empty"/><label for="empty" class="radio-btn"><span id="case_label_empty">Empty</span></label>
+            </div>
+
+            <div class="row">
+                <table id="gameGrid">
+                    <tr>
+                        <td id="cell_0_0" class="cell"></td>
+                        <td id="cell_0_1" class="cell"></td>
+                        <td id="cell_0_2" class="cell"></td>
+                        <td id="cell_0_3" class="cell"></td>
+                        <td id="cell_0_4" class="cell"></td>
+                        <td id="cell_0_5" class="cell"></td>
+                    </tr>
+                    <tr>
+                        <td id="cell_1_0" class="cell"></td>
+                        <td id="cell_1_1" class="cell"></td>
+                        <td id="cell_1_2" class="cell"></td>
+                        <td id="cell_1_3" class="cell"></td>
+                        <td id="cell_1_4" class="cell"></td>
+                        <td id="cell_1_5" class="cell"></td>
+                    </tr>
+                    <tr>
+                        <td id="cell_2_0" class="cell"></td>
+                        <td id="cell_2_1" class="cell"></td>
+                        <td id="cell_2_2" class="cell"></td>
+                        <td id="cell_2_3" class="cell"></td>
+                        <td id="cell_2_4" class="cell"></td>
+                        <td id="cell_2_5" class="cell"></td>
+                    </tr>
+                    <tr>
+                        <td id="cell_3_0" class="cell"></td>
+                        <td id="cell_3_1" class="cell"></td>
+                        <td id="cell_3_2" class="cell"></td>
+                        <td id="cell_3_3" class="cell"></td>
+                        <td id="cell_3_4" class="cell"></td>
+                        <td id="cell_3_5" class="cell"></td>
+                    </tr>
+                    <tr>
+                        <td id="cell_4_0" class="cell"></td>
+                        <td id="cell_4_1" class="cell"></td>
+                        <td id="cell_4_2" class="cell"></td>
+                        <td id="cell_4_3" class="cell"></td>
+                        <td id="cell_4_4" class="cell"></td>
+                        <td id="cell_4_5" class="cell"></td>
+                    </tr>
+                    <tr>
+                        <td id="cell_5_0" class="cell"></td>
+                        <td id="cell_5_1" class="cell"></td>
+                        <td id="cell_5_2" class="cell"></td>
+                        <td id="cell_5_3" class="cell"></td>
+                        <td id="cell_5_4" class="cell"></td>
+                        <td id="cell_5_5" class="cell"></td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
         <div class="col">
             <div class="row">
                 <div class="col">
-                    <h5>Q Table [UP, DOWN, LEFT, RIGHT]</h5>
+                    <h5><span id="q_table_heading">Q Table [UP, DOWN, LEFT, RIGHT]</span></h5>
                     <div id="q-table">
                     </div>
                 </div>
                 <div class="col">
                     <table class="table table-condensed" id="history" >
                         <thead>
-                            <th>Generation</th>
-                            <th>Win/Lose</th>
-                            <th>Steps</th>
+                            <th id="history_table_generation">Generation</th>
+                            <th id="history_table_winlose">Win/Lose</th>
+                            <th id="history_table_steps">Steps</th>
                         </thead>
                     </table>
                 </div>
             </div>
         </div>
-        
     </div>
+
+    <div style="width: 100%; margin-top: 150px;">
+        <canvas id="history-chart" style="width: 80%; height: 500px;"></canvas>
+    </div>
+    
+    <div class="language-selector">
+        <button id="langBtn"><span id="language_button">Langue</span></button>
+        <div id="langMenu" class="dropdown-content">
+            <a href="?lang=fr" data-lang="fr"><span id="french">Français</span></a>
+            <a href="?lang=en" data-lang="en"><span id="english">English</span></a>
+            <a href="?lang=es" data-lang="es"><span id="spanish">Español</span></a>
+        </div>
+    </div>
+
+    <footer>
+        <p id="footer_text">Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.</p>
+    </footer>
+    
+    <script src="../script/language.js"></script>
+    <script src="../language/trad.js"></script>
 </body>
 </html>

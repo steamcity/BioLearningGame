@@ -4,19 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Game</title>
-    <link rel="stylesheet" href="../style/style.css"> <!-- Inclusion de votre fichier CSS -->
-    <script src="PlayerScript.js" defer></script> <!-- Inclusion de votre fichier JavaScript -->
+    <link rel="stylesheet" href="../style/style.css"> 
+    <link rel="stylesheet" href="../style/language.css">
+    
+    <script src="PlayerScript.js" defer></script> 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="menu">
-        <a href="../index.html" class="square"><span>Acceuil</span></a>
-        <a href="" class="square"><span>Game Part</span></a>
-        <a href="../SelfLearningGame/SelfBiolearning.html" class="square"><span>AI Part</span></a>
-        <a href="../DesignSelfLearningGame/DesignBiolearning.html" class="square"><span>Design Part</span></a>
+        <a href="../index.html" class="square" id="home"><span>Home</span></a>
+        <a href="" class="square" id="game_part"><span>Game Part</span></a>
+        <a href="../SelfLearningGame/SelfBiolearning.html" class="square" id="ai_part"><span>AI Part</span></a>
+        <a href="../DesignSelfLearningGame/DesignBiolearning.html" class="square" id="design_part"><span>Design Part</span></a>
     </div>
 
-    <h1>Game Part</h1>
+    <h1 id="heading_game_part">Game Part</h1>
     <div class="row">
 
         <div class="col">
@@ -24,32 +27,45 @@
         </div>
 
         <div class="col">
-            <button type="button" id="reveal">Reveal</button>
-            <p><strong>Generation: </strong><span id="generation"></span></p>
-            <p><strong>Step: </strong><span id="step"></span></p>
-            <p><strong>Epsilon: </strong><span id="epsilon"></span></p>
+            <button type="button" id="reveal"><span id="reveal_button">Reveal</span></button>
+            <p><strong><span id="generation_label">Generation:</span></strong><span id="generation"></span></p>
+            <p><strong><span id="step_label">Step:</span></strong><span id="step"></span></p>
+            <p><strong><span id="epsilon_label">Epsilon:</span></strong><span id="epsilon"></span></p>
         </div>
 
         <div class="col">
             <div class="row">
-                <!-- <div class="col">
-                    <h4>Q Table</h4>
-                    <h5>[UP, DOWN, LEFT, RIGHT]</h5>
-                    <div id="q-table">
-                    </div>
-                </div> -->
                 <div class="col">
                     <table class="table table-condensed" id="history" >
                         <thead>
-                            <th>Generation</th>
-                            <th>Win/Lose</th>
-                            <th>Steps</th>
+                            <th id="history_table_generation">Generation</th>
+                            <th id="history_table_winlose">Win/Lose</th>
+                            <th id="history_table_steps">Steps</th>
                         </thead>
                     </table>
                 </div>
             </div>
         </div>
-
     </div>
+
+    <div style="width: 100%; margin-top: 150px;">
+        <canvas id="history-chart" style="width: 80%; height: 500px;"></canvas>
+    </div>
+
+    <div class="language-selector">
+        <button id="langBtn"><span id="language_button">Langue</span></button>
+        <div id="langMenu" class="dropdown-content">
+            <a href="?lang=fr" data-lang="fr"><span id="french">Français</span></a>
+            <a href="?lang=en" data-lang="en"><span id="english">English</span></a>
+            <a href="?lang=es" data-lang="es"><span id="spanish">Español</span></a>
+        </div>
+    </div>
+
+    <footer>
+        <p id="footer_text">Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.</p>
+    </footer>
+    
+    <script src="../script/language.js"></script>
+    <script src="../language/trad.js"></script>
 </body>
 </html>

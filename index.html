@@ -4,13 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BioLearning Game</title>
+  
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style/language.css">
 </head>
 <body>
   <div class="container">
-    <a href="PlayerLearningGame/PlayerBiolearning.html" class="square"><span>Game Part</span></a>
-    <a href="SelfLearningGame/SelfBiolearning.html" class="square"><span>AI Part</span></a>
-    <a href="DesignSelfLearningGame/DesignBiolearning.html" class="square"><span>Design Part</span></a>
+    <a href="" class="square">
+      <img src="img/logo.svg" alt="logo" style="width: 90%;">
+    </a>
+
+    <a href="PlayerLearningGame/PlayerBiolearning.html" class="square" id="game_part"><span>Game Part</span></a>
+    <a href="SelfLearningGame/SelfBiolearning.html" class="square" id="ai_part"><span>AI Part</span></a>
+    <a href="DesignSelfLearningGame/DesignBiolearning.html" class="square" id="design_part"><span>Design Part</span></a>
   </div>
+
+  <div class="language-selector">
+    <button id="langBtn">Langue</button>
+    <div id="langMenu" class="dropdown-content">
+        <a href="?lang=fr" data-lang="fr">Français</a>
+        <a href="?lang=en" data-lang="en">English</a>
+        <a href="?lang=es" data-lang="es">Español</a>
+    </div>
+  </div>
+
+  <footer id="footer">
+    <p id="footer_text"></p>
+  </footer>
+
+  <script src="language/trad.js"></script>
+  <script src="script/language.js"></script>
 </body>
 </html>
